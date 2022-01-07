@@ -13,10 +13,6 @@ const productsDom = document.querySelector(".products-center");
 let cart = [];
 let buttonsDom = [];
 
-closeCartBtn.addEventListener("click", () => {
-  cartOverlay.classList.remove("transparentBcg");
-  cartDom.classList.remove("showCart");
-});
 //Getting the products
 class Products {
   async getProducts() {
@@ -126,6 +122,20 @@ class UI {
     cartOverlay.classList.add("transparentBcg");
     cartDom.classList.add("showCart");
   }
+  hideCart() {
+    cartOverlay.classList.remove("transparentBcg");
+    cartDom.classList.remove("showCart");
+  }
+  setUpApp() {
+    cart = Storage.getCart();
+    this.setCartValues(cart);
+    this.populateCart(cart);
+    cartBtn.addEventListener("click", this.showCart);
+    closeCartBtn.addEventListener("click", this.hideCart);
+  }
+  populateCart(cart) {
+    cart.forEach((item) => this.addCartItem(item));
+  }
 }
 
 class Storage {
@@ -139,11 +149,18 @@ class Storage {
   static saveCart(cart) {
     localStorage.setItem("cart", JSON.stringify(cart));
   }
+  static getCart() {
+    return localStorage.getItem("cart")
+      ? JSON.parse(localStorage.getItem("cart"))
+      : [];
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const ui = new UI();
   const products = new Products();
+  //This is for get the cart items from local storage before showing the actual ui of the page and store the cart item in cart array
+  ui.setUpApp();
   products
     .getProducts()
     .then((products) => {
