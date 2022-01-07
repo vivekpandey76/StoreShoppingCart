@@ -51,7 +51,7 @@ class UI {
         />
         <button class="bag-btn" data-id=${product.id}>
           <i class="fas fa-shopping-cart"></i>
-          Go to bag
+          Add to Cart
         </button>
       </div>
       <h3>${product.title}</h3>
@@ -130,11 +130,69 @@ class UI {
     cart = Storage.getCart();
     this.setCartValues(cart);
     this.populateCart(cart);
+    //Here we are using reference cause we are using only the DOM function
     cartBtn.addEventListener("click", this.showCart);
     closeCartBtn.addEventListener("click", this.hideCart);
   }
   populateCart(cart) {
     cart.forEach((item) => this.addCartItem(item));
+  }
+  cartLogic() {
+    //Here we use arrow function cause we are going to access class UI function
+    clearCartBtn.addEventListener("click", () => {
+      this.clearCart();
+    });
+    //Cart remove and amount increasing decreasing logic
+    cartContent.addEventListener("click", (event) => {
+      if (event.target.classList.contains("remove-item")) {
+        let removeItem = event.target;
+        let id = removeItem.dataset.id;
+        cartContent.removeChild(removeItem.parentElement.parentElement);
+        this.removeCart(id);
+      } else if (event.target.classList.contains("fa-chevron-up")) {
+        let addAmount = event.target;
+        let id = addAmount.dataset.id;
+        let tempItem = cart.find((item) => item.id == id);
+        tempItem.amount = tempItem.amount + 1;
+        Storage.saveCart(cart);
+        this.setCartValues(cart);
+        addAmount.nextElementSibling.innerText = tempItem.amount;
+      } else if (event.target.classList.contains("fa-chevron-down")) {
+        let subAmount = event.target;
+        let id = subAmount.dataset.id;
+        let tempItem = cart.find((item) => item.id == id);
+        if (tempItem.amount > 0) {
+          tempItem.amount = tempItem.amount - 1;
+          Storage.saveCart(cart);
+          this.setCartValues(cart);
+          subAmount.previousElementSibling.innerText = tempItem.amount;
+        } else {
+          cartContent.removeChild(subAmount.parentElement.parentElement);
+          this.removeCart(id);
+        }
+      }
+    });
+  }
+  clearCart() {
+    let cartItems = cart.map((item) => item.id);
+    cartItems.forEach((id) => this.removeCart(id));
+    while (cartContent.children.length > 0) {
+      cartContent.removeChild(cartContent.children[0]);
+    }
+    this.hideCart();
+  }
+  removeCart(id) {
+    //Here we will update the cart array
+    cart = cart.filter((item) => item.id != id);
+    this.setCartValues(cart);
+    Storage.saveCart(cart);
+    let button = this.getSingleButton(id);
+    button.disabled = false;
+    button.innerHTML = `  <i class="fas fa-shopping-cart"></i>
+    Add to Cart`;
+  }
+  getSingleButton(id) {
+    return buttonsDom.find((button) => button.dataset.id === id);
   }
 }
 
@@ -170,5 +228,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(() => {
       //It will not return any button if the ui.displayproducts is not loaded
       ui.getBagButtons();
+      ui.cartLogic();
     });
 });
